@@ -5,40 +5,45 @@ import { Users, ShoppingBag, Home, FileText, MessageSquare, Calendar, Shield, St
 const Features = () => {
   const features = [
     {
+      id: "feed",
       icon: Users,
       title: "Social Feed",
       description: "Easily find roommates and share campus experiences through engaging posts in a verified student community.",
       gradient: "from-blue-500 to-purple-600"
     },
     {
+      id: "marketplace",
       icon: ShoppingBag,
       title: "Marketplace",
       description: "Buy and sell textbooks, electronics, furniture, and more within a trusted network of verified students.",
       gradient: "from-green-500 to-teal-600"
     },
     {
+      id: "apartments",
       icon: Home,
       title: "Apartment Finder",
       description: "Discover nearby apartments with tailored search filters to find the perfect home for your university years.",
       gradient: "from-orange-500 to-red-600"
     },
     {
+      id: "blogs",
       icon: FileText,
       title: "University Blogs",
       description: "Stay informed with the latest official blogs and announcements from your institution in one central hub.",
       gradient: "from-purple-500 to-pink-600"
     },
     {
-      icon: MessageSquare,
-      title: "Direct Messaging",
-      description: "Communicate effortlessly with fellow students and potential roommates through our secure messaging system.",
-      gradient: "from-indigo-500 to-blue-600"
-    },
-    {
+      id: "events",
       icon: Calendar,
       title: "Event Announcements",
       description: "Never miss out on campus happenings and community events with personalized notifications and reminders.",
       gradient: "from-yellow-500 to-orange-600"
+    },
+    {
+      icon: MessageSquare,
+      title: "Direct Messaging",
+      description: "Communicate effortlessly with fellow students and potential roommates through our secure messaging system.",
+      gradient: "from-indigo-500 to-blue-600"
     },
     {
       icon: Shield,
@@ -70,8 +75,9 @@ const Features = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <Card 
-              key={index} 
-              className="group hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1 border-0 bg-card/50 backdrop-blur-sm"
+              key={index}
+              id={feature.id}
+              className="group hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1 border-0 bg-card/50 backdrop-blur-sm scroll-mt-24"
             >
               <CardHeader className="space-y-4">
                 <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${feature.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>

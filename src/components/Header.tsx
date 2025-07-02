@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Users, MessageSquare, Home, ShoppingBag, Calendar, FileText } from "lucide-react";
 
 const Header = () => {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -15,26 +22,41 @@ const Header = () => {
           </div>
           
           <nav className="hidden md:flex items-center gap-6">
-            <a href="#feed" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+            <button 
+              onClick={() => scrollToSection('feed')} 
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
               <Users className="w-4 h-4" />
               Feed
-            </a>
-            <a href="#marketplace" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+            </button>
+            <button 
+              onClick={() => scrollToSection('marketplace')} 
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
               <ShoppingBag className="w-4 h-4" />
               Marketplace
-            </a>
-            <a href="#apartments" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+            </button>
+            <button 
+              onClick={() => scrollToSection('apartments')} 
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
               <Home className="w-4 h-4" />
               Apartments
-            </a>
-            <a href="#events" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+            </button>
+            <button 
+              onClick={() => scrollToSection('events')} 
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
               <Calendar className="w-4 h-4" />
               Events
-            </a>
-            <a href="#blogs" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+            </button>
+            <button 
+              onClick={() => scrollToSection('blogs')} 
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
               <FileText className="w-4 h-4" />
               Blogs
-            </a>
+            </button>
           </nav>
         </div>
 
