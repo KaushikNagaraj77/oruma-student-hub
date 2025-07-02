@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, ShoppingBag, Home, FileText, MessageSquare, Calendar, Shield, Star } from "lucide-react";
 
@@ -23,7 +24,7 @@ const Features = () => {
     },
     {
       icon: FileText,
-      title: "University Publications",
+      title: "University Blogs",
       description: "Stay informed with the latest official blogs and announcements from your institution in one central hub.",
       gradient: "from-purple-500 to-pink-600"
     },

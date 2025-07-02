@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Users, MessageSquare, Home, ShoppingBag, Calendar, FileText } from "lucide-react";
 
@@ -30,9 +31,9 @@ const Header = () => {
               <Calendar className="w-4 h-4" />
               Events
             </a>
-            <a href="#publications" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
+            <a href="#blogs" className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
               <FileText className="w-4 h-4" />
-              Publications
+              Blogs
             </a>
           </nav>
         </div>
