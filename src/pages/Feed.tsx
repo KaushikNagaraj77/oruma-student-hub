@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Heart, MessageSquare, Share, User } from "lucide-react";
+import Header from "@/components/Header";
 
 const Feed = () => {
   const posts = [
@@ -39,16 +40,45 @@ const Feed = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div className="text-center space-y-4">
-            <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
-              Student <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Feed</span>
-            </h1>
-            <p className="text-muted-foreground">
-              Connect with fellow students, share experiences, and build your campus community
-            </p>
+      <Header />
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        <div className="absolute inset-0 bg-[linear-gradient(45deg,hsl(var(--primary)/0.05)_1px,transparent_1px,transparent_50px,hsl(var(--secondary)/0.05)_51px)] bg-[length:52px_52px]"></div>
+        <div className="relative container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            <div className="space-y-4">
+              <h1 className="text-4xl lg:text-6xl font-bold text-foreground leading-tight">
+                Your Campus
+                <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                  Social Hub
+                </span>
+              </h1>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                Connect with fellow students, share experiences, discover events, and build meaningful relationships within your university community.
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <span>Real-time updates</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-secondary rounded-full"></div>
+                <span>Campus events</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <span>Study groups</span>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Feed Section */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-2xl mx-auto space-y-8">
 
           <Card className="border-2 border-dashed border-border/50">
             <CardContent className="p-6">
