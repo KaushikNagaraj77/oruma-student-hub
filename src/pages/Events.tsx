@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, MapPin, Users, Clock, Star, Search, Filter } from "lucide-react";
+import Header from "@/components/Header";
 
 const Events = () => {
   const events = [
@@ -99,6 +100,7 @@ const Events = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">
           <div className="text-center space-y-4">

@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Search, Filter, User, Star } from "lucide-react";
+import Header from "@/components/Header";
 
 const Marketplace = () => {
   const items = [
@@ -53,6 +54,7 @@ const Marketplace = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="space-y-8">
           <div className="text-center space-y-4">
