@@ -34,83 +34,41 @@ const Header = () => {
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">
-            {isHomePage ? (
-              <>
-                <button 
-                  onClick={() => scrollToSection('feed')} 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Users className="w-4 h-4" />
-                  Feed
-                </button>
-                <button 
-                  onClick={() => scrollToSection('marketplace')} 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  Marketplace
-                </button>
-                <button 
-                  onClick={() => scrollToSection('apartments')} 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Home className="w-4 h-4" />
-                  Apartments
-                </button>
-                <button 
-                  onClick={() => scrollToSection('events')} 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Calendar className="w-4 h-4" />
-                  Events
-                </button>
-                <button 
-                  onClick={() => scrollToSection('blogs')} 
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <FileText className="w-4 h-4" />
-                  Blogs
-                </button>
-              </>
-            ) : (
-              <>
-                <Link 
-                  to="/feed"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Users className="w-4 h-4" />
-                  Feed
-                </Link>
-                <Link 
-                  to="/marketplace"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  Marketplace
-                </Link>
-                <Link 
-                  to="/apartments"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Home className="w-4 h-4" />
-                  Apartments
-                </Link>
-                <Link 
-                  to="/events"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Calendar className="w-4 h-4" />
-                  Events
-                </Link>
-                <Link 
-                  to="/blogs"
-                  className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <FileText className="w-4 h-4" />
-                  Blogs
-                </Link>
-              </>
-            )}
+            <Link 
+              to="/feed"
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              Feed
+            </Link>
+            <Link 
+              to="/marketplace"
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Marketplace
+            </Link>
+            <Link 
+              to="/apartments"
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Apartments
+            </Link>
+            <Link 
+              to="/events"
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Calendar className="w-4 h-4" />
+              Events
+            </Link>
+            <Link 
+              to="/blogs"
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Blogs
+            </Link>
           </nav>
         </div>
 
