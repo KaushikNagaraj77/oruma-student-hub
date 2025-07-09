@@ -3,11 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Home, MapPin, Bed, Bath, Car, Wifi, Star, Search, Filter } from "lucide-react";
 import Header from "@/components/Header";
+import { MessageButton } from "@/components/MessageButton";
 
 const Apartments = () => {
   const apartments = [
     {
       id: 1,
+      landlordId: "2",
+      landlordName: "Emma Davis",
       title: "Modern 2BR near Stanford Campus",
       price: "$2,800/month",
       location: "Palo Alto, CA",
@@ -23,6 +26,8 @@ const Apartments = () => {
     },
     {
       id: 2,
+      landlordId: "3",
+      landlordName: "Mike Johnson",
       title: "Cozy Studio - Walking Distance",
       price: "$1,500/month",
       location: "Berkeley, CA",
@@ -38,6 +43,8 @@ const Apartments = () => {
     },
     {
       id: 3,
+      landlordId: "4",
+      landlordName: "Sarah Wilson",
       title: "Shared 4BR House",
       price: "$900/month per room",
       location: "Los Angeles, CA",
@@ -53,6 +60,8 @@ const Apartments = () => {
     },
     {
       id: 4,
+      landlordId: "5",
+      landlordName: "Alex Chen",
       title: "Luxury 1BR with Amenities",
       price: "$2,200/month",
       location: "Cambridge, MA",
@@ -152,7 +161,14 @@ const Apartments = () => {
                       <span className="text-sm font-medium">{apartment.rating}</span>
                       <span className="text-sm text-muted-foreground">({apartment.reviews})</span>
                     </div>
-                    <Button size="sm" variant="hero">View Details</Button>
+                    <div className="flex gap-2">
+                      <MessageButton 
+                        userId={apartment.landlordId} 
+                        userName={apartment.landlordName}
+                        size="sm"
+                      />
+                      <Button size="sm" variant="hero">View Details</Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

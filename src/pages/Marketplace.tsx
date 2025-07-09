@@ -3,15 +3,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Search, Filter, User, Star } from "lucide-react";
 import Header from "@/components/Header";
+import { MessageButton } from "@/components/MessageButton";
 
 const Marketplace = () => {
   const items = [
     {
       id: 1,
+      sellerId: "2",
       title: "MacBook Pro 13\" 2021",
       price: "$1,200",
       condition: "Like New",
-      seller: "Alex Thompson",
+      seller: "Emma Davis",
       university: "Stanford University",
       rating: 4.9,
       image: "photo-1496181133206-80ce9b88a853",
@@ -19,10 +21,11 @@ const Marketplace = () => {
     },
     {
       id: 2,
+      sellerId: "3",
       title: "Calculus Textbook Bundle",
       price: "$80",
       condition: "Good",
-      seller: "Maria Garcia",
+      seller: "Mike Johnson",
       university: "MIT",
       rating: 4.7,
       image: "photo-1481627834876-b7833e8f5570",
@@ -30,10 +33,11 @@ const Marketplace = () => {
     },
     {
       id: 3,
+      sellerId: "4",
       title: "Mini Fridge - Perfect for Dorms",
       price: "$150",
       condition: "Excellent",
-      seller: "James Wilson",
+      seller: "Sarah Wilson",
       university: "UC Berkeley",
       rating: 5.0,
       image: "photo-1556909114-f6e7ad7d3136",
@@ -41,10 +45,11 @@ const Marketplace = () => {
     },
     {
       id: 4,
+      sellerId: "5",
       title: "Study Desk with Lamp",
       price: "$75",
       condition: "Good",
-      seller: "Sophie Chen",
+      seller: "Alex Chen",
       university: "UCLA",
       rating: 4.8,
       image: "photo-1586023492125-27b2c045efd7",
@@ -120,7 +125,11 @@ const Marketplace = () => {
                         </div>
                       </div>
                     </div>
-                    <Button size="sm" variant="outline">Contact</Button>
+                    <MessageButton 
+                      userId={item.sellerId} 
+                      userName={item.seller}
+                      size="sm"
+                    />
                   </div>
                 </CardContent>
               </Card>
