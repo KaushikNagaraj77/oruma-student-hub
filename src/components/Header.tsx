@@ -1,11 +1,15 @@
 
 import { Button } from "@/components/ui/button";
-import { Users, MessageSquare, Home, ShoppingBag, Calendar, FileText } from "lucide-react";
+import { Users, MessageSquare, Home, ShoppingBag, Calendar, FileText, User, Settings, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 const Header = () => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+  const { user, logout } = useAuth();
 
   const scrollToSection = (sectionId: string) => {
     if (isHomePage) {
@@ -73,12 +77,53 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          <Button variant="ghost" className="hidden sm:inline-flex">
-            Sign In
-          </Button>
-          <Button variant="hero" size="lg">
-            Get Started
-          </Button>
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden md:block">{user.name.split(' ')[0]}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/messages" className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Messages
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="flex items-center gap-2 text-destructive">
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button variant="ghost" className="hidden sm:inline-flex" asChild>
+                <Link to="/signin">Sign In</Link>
+              </Button>
+              <Button variant="hero" size="lg" asChild>
+                <Link to="/signup">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
