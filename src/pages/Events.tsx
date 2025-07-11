@@ -1,10 +1,15 @@
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, Clock, Star, Search, Filter } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, Star, Search, Filter, Plus } from "lucide-react";
 import Header from "@/components/Header";
+import { CreateEventModal } from "@/components/CreateEventModal";
 
 const Events = () => {
+  const navigate = useNavigate();
+  const [createEventModalOpen, setCreateEventModalOpen] = useState(false);
   const events = [
     {
       id: 1,
@@ -125,11 +130,15 @@ const Events = () => {
               <Filter className="w-4 h-4 mr-2" />
               Filters
             </Button>
+            <Button variant="hero" size="lg" onClick={() => setCreateEventModalOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Event
+            </Button>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
-              <Card key={event.id} className="group hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1">
+              <Card key={event.id} className="group hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1 cursor-pointer" onClick={() => navigate(`/events/${event.id}`)}>
                 <div className="aspect-[4/3] bg-muted rounded-t-lg overflow-hidden">
                   <img 
                     src={`https://images.unsplash.com/${event.image}?auto=format&fit=crop&w=500&h=375`}
@@ -180,6 +189,8 @@ const Events = () => {
           </div>
         </div>
       </div>
+      
+      <CreateEventModal open={createEventModalOpen} onOpenChange={setCreateEventModalOpen} />
     </div>
   );
 };

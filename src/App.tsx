@@ -12,6 +12,7 @@ import Marketplace from "./pages/Marketplace";
 import ItemDetail from "./pages/ItemDetail";
 import Apartments from "./pages/Apartments";
 import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
 import Blogs from "./pages/Blogs";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
@@ -36,7 +37,8 @@ const App = () => (
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/marketplace/item/:id" element={<ItemDetail />} />
               <Route path="/apartments" element={<Apartments />} />
-              <Route path="/events" element={<Events />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/blogs" element={<Blogs />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/signin" element={<SignIn />} />
