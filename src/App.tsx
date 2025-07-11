@@ -9,6 +9,7 @@ import { MessagingProvider } from "@/contexts/MessagingContext";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
 import Marketplace from "./pages/Marketplace";
+import ItemDetail from "./pages/ItemDetail";
 import Apartments from "./pages/Apartments";
 import Events from "./pages/Events";
 import Blogs from "./pages/Blogs";
@@ -32,7 +33,8 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/feed" element={<Feed />} />
-              <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/marketplace" element={<Marketplace />} />
+            <Route path="/marketplace/item/:id" element={<ItemDetail />} />
               <Route path="/apartments" element={<Apartments />} />
               <Route path="/events" element={<Events />} />
               <Route path="/blogs" element={<Blogs />} />

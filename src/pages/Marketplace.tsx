@@ -1,11 +1,16 @@
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Search, Filter, User, Star } from "lucide-react";
 import Header from "@/components/Header";
 import { MessageButton } from "@/components/MessageButton";
+import { SellItemModal } from "@/components/SellItemModal";
 
 const Marketplace = () => {
+  const navigate = useNavigate();
+  const [sellModalOpen, setSellModalOpen] = useState(false);
   const items = [
     {
       id: 1,
@@ -84,7 +89,7 @@ const Marketplace = () => {
               <Filter className="w-4 h-4 mr-2" />
               Filters
             </Button>
-            <Button variant="hero" size="lg">
+            <Button variant="hero" size="lg" onClick={() => setSellModalOpen(true)}>
               <ShoppingBag className="w-4 h-4 mr-2" />
               Sell Item
             </Button>
@@ -92,7 +97,7 @@ const Marketplace = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((item) => (
-              <Card key={item.id} className="group hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1">
+              <Card key={item.id} className="group hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1 cursor-pointer" onClick={() => navigate(`/marketplace/item/${item.id}`)}>
                 <div className="aspect-square bg-muted rounded-t-lg overflow-hidden">
                   <img 
                     src={`https://images.unsplash.com/${item.image}?auto=format&fit=crop&w=400&h=400`}
@@ -137,6 +142,8 @@ const Marketplace = () => {
           </div>
         </div>
       </div>
+      
+      <SellItemModal open={sellModalOpen} onOpenChange={setSellModalOpen} />
     </div>
   );
 };
