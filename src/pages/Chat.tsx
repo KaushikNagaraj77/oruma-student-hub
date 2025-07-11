@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useMessaging, mockUsers } from '@/contexts/MessagingContext';
+import { useMessaging } from '@/contexts/MessagingContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -42,14 +42,12 @@ const formatTimestamp = (date: Date) => {
   });
 };
 
-const getUserById = (id: string) => {
-  return mockUsers.find(user => user.id === id);
-};
+// getUserById function removed - using users cache from MessagingContext
 
 export default function Chat() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const { user } = useAuth();
-  const { conversations, messages, sendMessage, markAsRead } = useMessaging();
+  const { conversations, messages, sendMessage, markAsRead, users } = useMessaging();
   const navigate = useNavigate();
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -58,8 +56,8 @@ export default function Chat() {
   const conversation = conversations.find(conv => conv.id === conversationId);
   const conversationMessages = conversationId ? messages[conversationId] || [] : [];
   
-  const otherParticipant = conversation?.participants.find(p => p !== '1');
-  const otherUser = otherParticipant ? getUserById(otherParticipant) : null;
+  const otherParticipant = conversation?.participants.find(p => p !== user?.id);
+  const otherUser = otherParticipant ? users[otherParticipant] : null;
 
   useEffect(() => {
     if (conversationId && conversation) {
@@ -183,15 +181,15 @@ export default function Chat() {
                 ) : (
                   <>
                     {conversationMessages.map((message, index) => {
-                      const isOwnMessage = message.senderId === '1';
+                      const isOwnMessage = message.senderId === user?.id;
                       const showTimestamp = index === 0 || 
-                        (conversationMessages[index - 1].timestamp.getTime() - message.timestamp.getTime()) > 5 * 60 * 1000;
+                        (new Date(conversationMessages[index - 1].timestamp).getTime() - new Date(message.timestamp).getTime()) > 5 * 60 * 1000;
 
                       return (
                         <div key={message.id}>
                           {showTimestamp && (
                             <div className="text-center text-xs text-muted-foreground my-4">
-                              {formatTimestamp(message.timestamp)}
+                              {formatTimestamp(new Date(message.timestamp))}
                             </div>
                           )}
                           
@@ -218,7 +216,7 @@ export default function Chat() {
                                   <span className={`text-xs ${
                                     isOwnMessage ? 'text-primary-foreground/70' : 'text-muted-foreground'
                                   }`}>
-                                    {message.timestamp.toLocaleTimeString('en-US', { 
+                                    {new Date(message.timestamp).toLocaleTimeString('en-US', { 
                                       hour: 'numeric', 
                                       minute: '2-digit',
                                       hour12: true 

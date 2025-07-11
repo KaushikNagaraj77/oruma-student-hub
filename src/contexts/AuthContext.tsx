@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { authApi } from '../services/authApi';
+import { tokenManager } from '../utils/tokenManager';
 
 interface User {
   id: string;
@@ -11,9 +13,13 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (userData: SignupData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
+  clearError: () => void;
 }
 
 interface SignupData {
@@ -36,74 +42,175 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Check for existing session on app load
-    const savedUser = localStorage.getItem('oruma_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+  const isAuthenticated = !!user && tokenManager.isTokenValid();
+
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
+  const handleApiError = useCallback((err: unknown) => {
+    if (err instanceof Error) {
+      setError(err.message);
+    } else {
+      setError('An unexpected error occurred');
+    }
+  }, []);
+
+  const refreshAuth = useCallback(async () => {
     try {
-      // Mock authentication - in real app, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+      setIsLoading(true);
+      const refreshToken = tokenManager.getRefreshToken();
       
-      // Mock user data
-      const mockUser: User = {
-        id: '1',
-        name: 'John Smith',
-        email: email,
-        university: 'University of California',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('oruma_user', JSON.stringify(mockUser));
-    } catch (error) {
-      throw new Error('Invalid credentials');
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await authApi.refreshToken();
+      tokenManager.setTokens(response.token, response.refreshToken);
+
+      // Get updated user data
+      const userData = await authApi.getCurrentUser();
+      setUser(userData);
+      setError(null);
+    } catch (err) {
+      handleApiError(err);
+      // Clear tokens and user data if refresh fails
+      tokenManager.clearTokens();
+      setUser(null);
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [handleApiError]);
 
-  const signup = async (userData: SignupData) => {
-    setIsLoading(true);
+  const initializeAuth = useCallback(async () => {
     try {
-      // Mock signup - in real app, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API delay
-      
-      const newUser: User = {
-        id: Date.now().toString(),
-        name: userData.name,
-        email: userData.email,
-        university: userData.university,
-        avatar: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face`
-      };
-      
-      setUser(newUser);
-      localStorage.setItem('oruma_user', JSON.stringify(newUser));
-    } catch (error) {
-      throw new Error('Signup failed');
+      setIsLoading(true);
+
+      if (!tokenManager.isTokenValid()) {
+        // Try to refresh if we have a refresh token
+        const refreshToken = tokenManager.getRefreshToken();
+        if (refreshToken) {
+          await refreshAuth();
+          return;
+        }
+        
+        // No valid tokens, clear everything
+        tokenManager.clearTokens();
+        setUser(null);
+        return;
+      }
+
+      // Token is valid, get current user
+      const userData = await authApi.getCurrentUser();
+      setUser(userData);
+      setError(null);
+
+      // Check if token should be refreshed proactively
+      if (tokenManager.shouldRefreshToken()) {
+        try {
+          await refreshAuth();
+        } catch (err) {
+          // If refresh fails, continue with current session
+          console.warn('Proactive token refresh failed:', err);
+        }
+      }
+    } catch (err) {
+      handleApiError(err);
+      tokenManager.clearTokens();
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [refreshAuth, handleApiError]);
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('oruma_user');
-  };
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
+  // Set up automatic token refresh check
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(async () => {
+      if (tokenManager.shouldRefreshToken()) {
+        try {
+          await refreshAuth();
+        } catch (err) {
+          console.error('Automatic token refresh failed:', err);
+          // Force logout if refresh fails
+          await logout();
+        }
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, refreshAuth]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await authApi.login({ email, password });
+      
+      tokenManager.setTokens(response.token, response.refreshToken);
+      setUser(response.user);
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleApiError]);
+
+  const signup = useCallback(async (userData: SignupData) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await authApi.register(userData);
+      
+      tokenManager.setTokens(response.token, response.refreshToken);
+      setUser(response.user);
+    } catch (err) {
+      handleApiError(err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleApiError]);
+
+  const logout = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      
+      // Call logout API to invalidate tokens on server
+      await authApi.logout();
+    } catch (err) {
+      // Continue with logout even if API call fails
+      console.warn('Logout API call failed:', err);
+    } finally {
+      // Clear local tokens and user data
+      tokenManager.clearTokens();
+      setUser(null);
+      setError(null);
+      setIsLoading(false);
+    }
+  }, []);
 
   const value = {
     user,
     isLoading,
+    isAuthenticated,
+    error,
     login,
     signup,
-    logout
+    logout,
+    refreshAuth,
+    clearError,
   };
 
   return (

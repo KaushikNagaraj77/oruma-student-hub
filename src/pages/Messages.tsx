@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMessaging, mockUsers } from '@/contexts/MessagingContext';
+import { useMessaging } from '@/contexts/MessagingContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,13 +23,11 @@ const formatTimestamp = (date: Date) => {
   return date.toLocaleDateString();
 };
 
-const getUserById = (id: string) => {
-  return mockUsers.find(user => user.id === id);
-};
+// getUserById function removed - using users cache from MessagingContext
 
 export default function Messages() {
   const { user } = useAuth();
-  const { conversations } = useMessaging();
+  const { conversations, users } = useMessaging();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -49,8 +47,8 @@ export default function Messages() {
   }
 
   const filteredConversations = conversations.filter(conv => {
-    const otherParticipant = conv.participants.find(p => p !== '1');
-    const otherUser = otherParticipant ? getUserById(otherParticipant) : null;
+    const otherParticipant = conv.participants.find(p => p !== user?.id);
+    const otherUser = otherParticipant ? users[otherParticipant] : null;
     return otherUser?.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
@@ -100,8 +98,8 @@ export default function Messages() {
             ) : (
               <div className="divide-y">
                 {filteredConversations.map((conversation) => {
-                  const otherParticipant = conversation.participants.find(p => p !== '1');
-                  const otherUser = otherParticipant ? getUserById(otherParticipant) : null;
+                  const otherParticipant = conversation.participants.find(p => p !== user?.id);
+                  const otherUser = otherParticipant ? users[otherParticipant] : null;
                   
                   if (!otherUser) return null;
 
@@ -135,7 +133,7 @@ export default function Messages() {
                             </h3>
                             <div className="flex items-center gap-1 text-muted-foreground text-sm">
                               <Clock className="h-3 w-3" />
-                              {conversation.lastMessage && formatTimestamp(conversation.lastMessage.timestamp)}
+                              {conversation.lastMessage && formatTimestamp(new Date(conversation.lastMessage.timestamp))}
                             </div>
                           </div>
                           
@@ -145,7 +143,7 @@ export default function Messages() {
                                 ? 'text-foreground font-medium' 
                                 : 'text-muted-foreground'
                             }`}>
-                              {conversation.lastMessage.senderId === '1' && 'You: '}
+                              {conversation.lastMessage.senderId === user?.id && 'You: '}
                               {conversation.lastMessage.content}
                             </p>
                           )}
@@ -154,7 +152,7 @@ export default function Messages() {
                         <div className="flex flex-col items-end gap-2">
                           {conversation.lastMessage && (
                             <div className="flex items-center gap-1">
-                              {conversation.lastMessage.senderId === '1' && (
+                              {conversation.lastMessage.senderId === user?.id && (
                                 <div className={`w-2 h-2 rounded-full ${
                                   conversation.lastMessage.status === 'read' ? 'bg-blue-500' :
                                   conversation.lastMessage.status === 'delivered' ? 'bg-gray-400' :

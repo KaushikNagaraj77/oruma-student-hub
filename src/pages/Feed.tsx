@@ -1,153 +1,278 @@
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, MessageSquare, Share, Bookmark, MoreHorizontal, User, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { ThumbsUp, MessageSquare, Share, Bookmark, MoreHorizontal, User, MapPin, ChevronLeft, ChevronRight, Loader2, Send } from "lucide-react";
 import Header from "@/components/Header";
-import { useState } from "react";
+import PostCreationForm from "@/components/PostCreationForm";
+import { useAuth } from "@/contexts/AuthContext";
+import { postsApi, Post, Comment } from "@/services/postsApi";
+import { websocketService, PostLikedEvent, PostCommentedEvent, PostSavedEvent, NewPostEvent } from "@/services/websocketService";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { ParsedText, formatTimeAgo } from "@/utils/textParsing";
 
 const Feed = () => {
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      author: "Sarah Johnson",
-      username: "@sarah_studies",
-      university: "Stanford University",
-      time: "2 hours ago",
-      location: "Green Library",
-      content: "Late night grind at the library! Finals week energy 📚⚡ #StudyGroup #FinalsWeek #StanfordLife",
-      likes: 147,
-      comments: 23,
-      saves: 12,
-      images: ["photo-1481627834876-b7833e8f5570"],
-      liked: false,
-      saved: false,
-      type: "study"
-    },
-    {
-      id: 2,
-      author: "Mike Chen",
-      username: "@mike_eats",
-      university: "UC Berkeley",
-      time: "4 hours ago",
-      location: "Crossroads Dining",
-      content: "Dining hall actually served something decent today 😱🍕 The pizza bar was on point! #UCBFood #DiningHall #Blessed",
-      likes: 89,
-      comments: 31,
-      saves: 5,
-      images: ["photo-1565299624946-b28f40a0ca4b"],
-      liked: true,
-      saved: false,
-      type: "food"
-    },
-    {
-      id: 3,
-      author: "Emma Rodriguez",
-      username: "@emma_achieves",
-      university: "UCLA", 
-      time: "6 hours ago",
-      location: "Powell Library",
-      content: "Just got accepted to the Dean's List! Hard work pays off 🎓✨ Thank you to everyone who supported me! #DeansL ist #UCLA #Achievement",
-      likes: 234,
-      comments: 47,
-      saves: 18,
-      images: ["photo-1523050854058-8df90110c9f1"],
-      liked: false,
-      saved: true,
-      type: "achievement"
-    },
-    {
-      id: 4,
-      author: "Alex Thompson",
-      username: "@alex_social",
-      university: "MIT",
-      time: "8 hours ago",
-      location: "Killian Court",
-      content: "Amazing turnout at the Fall Festival! 🍂🎉 Best campus event this semester. Love our MIT community! #FallFestival #MIT #CommunityLove",
-      likes: 312,
-      comments: 58,
-      saves: 25,
-      images: ["photo-1511632765486-a01980e01a18", "photo-1492684223066-81342ee5ff30"],
-      liked: true,
-      saved: false,
-      type: "event"
-    },
-    {
-      id: 5,
-      author: "Jessica Park",
-      username: "@jess_studybuddy",
-      university: "Harvard University",
-      time: "12 hours ago",
-      location: "Widener Library",
-      content: "Study group session complete! ✅ We conquered organic chemistry together 💪 #StudyBuddies #OrganicChem #Harvard #Teamwork",
-      likes: 156,
-      comments: 29,
-      saves: 14,
-      images: ["photo-1522202176988-66273c2fd55f"],
-      liked: false,
-      saved: false,
-      type: "study"
+  const { user, isAuthenticated } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [cursor, setCursor] = useState<string | undefined>();
+  const [error, setError] = useState<string | null>(null);
+  const [expandedComments, setExpandedComments] = useState(new Set<string>());
+  const [currentImageIndex, setCurrentImageIndex] = useState<{[postId: string]: number}>({});
+  const [comments, setComments] = useState<{[postId: string]: Comment[]}>({});
+  const [commentInputs, setCommentInputs] = useState<{[postId: string]: string}>({});
+  const [submittingComments, setSubmittingComments] = useState(new Set<string>());
+
+  // WebSocket event handlers
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const handlePostLiked = (data: PostLikedEvent) => {
+      setPosts(prev => prev.map(post => 
+        post.id === data.postId 
+          ? { ...post, likes: data.likesCount, liked: data.userId === user?.id }
+          : post
+      ));
+    };
+
+    const handlePostCommented = (data: PostCommentedEvent) => {
+      setPosts(prev => prev.map(post => 
+        post.id === data.postId 
+          ? { ...post, comments: data.commentsCount }
+          : post
+      ));
+      
+      setComments(prev => ({
+        ...prev,
+        [data.postId]: [...(prev[data.postId] || []), data.comment as Comment]
+      }));
+    };
+
+    const handlePostSaved = (data: PostSavedEvent) => {
+      setPosts(prev => prev.map(post => 
+        post.id === data.postId 
+          ? { ...post, saved: data.userId === user?.id }
+          : post
+      ));
+    };
+
+    const handleNewPost = (data: NewPostEvent) => {
+      setPosts(prev => [data.post, ...prev]);
+    };
+
+    websocketService.on('post_liked', handlePostLiked);
+    websocketService.on('post_unliked', handlePostLiked);
+    websocketService.on('post_commented', handlePostCommented);
+    websocketService.on('post_saved', handlePostSaved);
+    websocketService.on('post_unsaved', handlePostSaved);
+    websocketService.on('new_post', handleNewPost);
+
+    return () => {
+      websocketService.off('post_liked', handlePostLiked);
+      websocketService.off('post_unliked', handlePostLiked);
+      websocketService.off('post_commented', handlePostCommented);
+      websocketService.off('post_saved', handlePostSaved);
+      websocketService.off('post_unsaved', handlePostSaved);
+      websocketService.off('new_post', handleNewPost);
+    };
+  }, [isAuthenticated, user?.id]);
+
+  const loadPosts = useCallback(async (isLoadMore = false) => {
+    if (isLoading) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await postsApi.getPosts(isLoadMore ? cursor : undefined);
+      
+      setPosts(prev => isLoadMore ? [...prev, ...response.posts] : response.posts);
+      setHasMore(response.hasMore);
+      setCursor(response.nextCursor);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load posts');
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  }, [cursor, isLoading]);
 
-  const [expandedComments, setExpandedComments] = useState(new Set());
-  const [currentImageIndex, setCurrentImageIndex] = useState({});
+  const loadMorePosts = useCallback(() => {
+    loadPosts(true);
+  }, [loadPosts]);
 
-  const handleLike = (postId) => {
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
-        : post
+  const { loadMoreRef } = useInfiniteScroll({
+    onLoadMore: loadMorePosts,
+    hasMore,
+    isLoading,
+  });
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadPosts();
+    }
+  }, [isAuthenticated]);
+
+  const handleLike = async (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    // Optimistic update
+    setPosts(prev => prev.map(p => 
+      p.id === postId 
+        ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
+        : p
     ));
+
+    try {
+      const response = await postsApi.likePost(postId);
+      websocketService.sendPostLike(postId, response.liked);
+      
+      // Update with server response
+      setPosts(prev => prev.map(p => 
+        p.id === postId 
+          ? { ...p, liked: response.liked, likes: response.likesCount }
+          : p
+      ));
+    } catch (error) {
+      // Revert optimistic update
+      setPosts(prev => prev.map(p => 
+        p.id === postId 
+          ? { ...p, liked: post.liked, likes: post.likes }
+          : p
+      ));
+      setError('Failed to update like');
+    }
   };
 
-  const handleSave = (postId) => {
-    setPosts(posts.map(post => 
-      post.id === postId 
-        ? { ...post, saved: !post.saved }
-        : post
+  const handleSave = async (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (!post) return;
+
+    // Optimistic update
+    setPosts(prev => prev.map(p => 
+      p.id === postId 
+        ? { ...p, saved: !p.saved }
+        : p
     ));
+
+    try {
+      const response = await postsApi.savePost(postId);
+      websocketService.sendPostSave(postId, response.saved);
+    } catch (error) {
+      // Revert optimistic update
+      setPosts(prev => prev.map(p => 
+        p.id === postId 
+          ? { ...p, saved: post.saved }
+          : p
+      ));
+      setError('Failed to save post');
+    }
   };
 
-  const toggleComments = (postId) => {
+  const loadComments = async (postId: string) => {
+    try {
+      const response = await postsApi.getComments(postId);
+      setComments(prev => ({ ...prev, [postId]: response.comments }));
+    } catch (error) {
+      setError('Failed to load comments');
+    }
+  };
+
+  const toggleComments = (postId: string) => {
     const newExpanded = new Set(expandedComments);
     if (newExpanded.has(postId)) {
       newExpanded.delete(postId);
     } else {
       newExpanded.add(postId);
+      if (!comments[postId]) {
+        loadComments(postId);
+      }
     }
     setExpandedComments(newExpanded);
   };
 
-  const nextImage = (postId, totalImages) => {
+  const handleCommentSubmit = async (postId: string) => {
+    const content = commentInputs[postId]?.trim();
+    if (!content || submittingComments.has(postId)) return;
+
+    setSubmittingComments(prev => new Set(prev).add(postId));
+
+    try {
+      const response = await postsApi.createComment(postId, { content });
+      
+      // Update comments
+      setComments(prev => ({
+        ...prev,
+        [postId]: [...(prev[postId] || []), response.comment]
+      }));
+
+      // Update post comment count optimistically
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, comments: post.comments + 1 }
+          : post
+      ));
+
+      // Clear input
+      setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+
+      // Send WebSocket event
+      websocketService.sendPostComment(postId, response.comment);
+    } catch (error) {
+      setError('Failed to post comment');
+    } finally {
+      setSubmittingComments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    }
+  };
+
+  const nextImage = (postId: string, totalImages: number) => {
     setCurrentImageIndex(prev => ({
       ...prev,
       [postId]: ((prev[postId] || 0) + 1) % totalImages
     }));
   };
 
-  const prevImage = (postId, totalImages) => {
+  const prevImage = (postId: string, totalImages: number) => {
     setCurrentImageIndex(prev => ({
       ...prev,
       [postId]: ((prev[postId] || 0) - 1 + totalImages) % totalImages
     }));
   };
 
-  const renderHashtagsAndMentions = (text) => {
-    return text.split(' ').map((word, index) => {
-      if (word.startsWith('#')) {
-        return <span key={index} className="text-primary font-medium">{word} </span>;
-      } else if (word.startsWith('@')) {
-        return <span key={index} className="text-secondary font-medium">{word} </span>;
-      }
-      return word + ' ';
-    });
+  const handleHashtagClick = (hashtag: string) => {
+    // Navigate to hashtag feed
+    console.log('Navigate to hashtag:', hashtag);
   };
+
+  const handleMentionClick = (username: string) => {
+    // Navigate to user profile
+    console.log('Navigate to user profile:', username);
+  };
+
+  const handlePostCreated = (newPost: Post) => {
+    setPosts(prev => [newPost, ...prev]);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Please log in to view the feed</h2>
+          <p className="text-muted-foreground">You need to be authenticated to access this page.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
-      {/* Simplified Header */}
+      {/* Header */}
       <div className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="max-w-lg mx-auto">
@@ -158,27 +283,32 @@ const Feed = () => {
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="container mx-auto px-4 py-2">
+          <div className="max-w-lg mx-auto">
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-2 rounded-lg text-sm">
+              {error}
+              <button 
+                onClick={() => setError(null)}
+                className="ml-2 underline hover:no-underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Feed Section */}
       <div className="container mx-auto px-4 py-6">
         <div className="max-w-lg mx-auto space-y-6">
 
           {/* Create Post */}
-          <Card className="border border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1">
-                  <input 
-                    type="text" 
-                    placeholder="Share what's happening on campus..."
-                    className="w-full p-3 rounded-full border border-input bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PostCreationForm 
+            onPostCreated={handlePostCreated}
+            onError={setError}
+          />
 
           {/* Posts */}
           <div className="space-y-6">
@@ -203,7 +333,7 @@ const Feed = () => {
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{post.university}</span>
                           <span>•</span>
-                          <span>{post.time}</span>
+                          <span>{formatTimeAgo(post.createdAt)}</span>
                           {post.location && (
                             <>
                               <span>•</span>
@@ -226,7 +356,11 @@ const Feed = () => {
                   
                   {/* Post Content */}
                   <div className="text-foreground leading-relaxed">
-                    {renderHashtagsAndMentions(post.content)}
+                    <ParsedText 
+                      text={post.content}
+                      onHashtagClick={handleHashtagClick}
+                      onMentionClick={handleMentionClick}
+                    />
                   </div>
 
                   {/* Post Images */}
@@ -234,7 +368,7 @@ const Feed = () => {
                     <div className="relative -mx-6 group">
                       <div className="aspect-square bg-muted overflow-hidden">
                         <img 
-                          src={`https://images.unsplash.com/${post.images[currentImageIndex[post.id] || 0]}?auto=format&fit=crop&w=600&h=600`}
+                          src={post.images[currentImageIndex[post.id] || 0]}
                           alt="Post content"
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
@@ -243,13 +377,13 @@ const Feed = () => {
                         {post.images.length > 1 && (
                           <>
                             <button 
-                              onClick={() => prevImage(post.id, post.images.length)}
+                              onClick={() => prevImage(post.id, post.images!.length)}
                               className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100"
                             >
                               <ChevronLeft className="w-4 h-4" />
                             </button>
                             <button 
-                              onClick={() => nextImage(post.id, post.images.length)}
+                              onClick={() => nextImage(post.id, post.images!.length)}
                               className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all opacity-0 group-hover:opacity-100"
                             >
                               <ChevronRight className="w-4 h-4" />
@@ -318,39 +452,30 @@ const Feed = () => {
                   {expandedComments.has(post.id) && (
                     <div className="space-y-3 pt-3 border-t border-border/50">
                       <div className="space-y-2">
-                        <div className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
-                            <User className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="bg-muted/50 rounded-2xl px-3 py-2">
-                              <span className="font-medium text-sm">@student_life</span>
-                              <p className="text-sm">This is amazing! Keep up the great work! 🔥</p>
+                        {comments[post.id]?.map((comment) => (
+                          <div key={comment.id} className="flex gap-3">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center">
+                              <User className="w-4 h-4 text-white" />
                             </div>
-                            <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                              <span>2h</span>
-                              <button className="hover:text-primary">Reply</button>
-                              <button className="hover:text-primary">👍 12</button>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="flex gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                            <User className="w-4 h-4 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="bg-muted/50 rounded-2xl px-3 py-2">
-                              <span className="font-medium text-sm">@campus_news</span>
-                              <p className="text-sm">So inspiring! Love seeing students succeed 📚✨</p>
-                            </div>
-                            <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
-                              <span>1h</span>
-                              <button className="hover:text-primary">Reply</button>
-                              <button className="hover:text-primary">👍 8</button>
+                            <div className="flex-1">
+                              <div className="bg-muted/50 rounded-2xl px-3 py-2">
+                                <span className="font-medium text-sm">{comment.username}</span>
+                                <p className="text-sm">
+                                  <ParsedText 
+                                    text={comment.content}
+                                    onHashtagClick={handleHashtagClick}
+                                    onMentionClick={handleMentionClick}
+                                  />
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+                                <span>{formatTimeAgo(comment.createdAt)}</span>
+                                <button className="hover:text-primary">Reply</button>
+                                <button className="hover:text-primary">👍 {comment.likes}</button>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
                       
                       {/* Add Comment */}
@@ -358,12 +483,28 @@ const Feed = () => {
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
                           <User className="w-4 h-4 text-white" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 flex gap-2">
                           <input 
                             type="text"
                             placeholder="Add a comment..."
-                            className="w-full p-2 rounded-full border border-input bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                            value={commentInputs[post.id] || ''}
+                            onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                            onKeyDown={(e) => e.key === 'Enter' && handleCommentSubmit(post.id)}
+                            className="flex-1 p-2 rounded-full border border-input bg-muted/30 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                            disabled={submittingComments.has(post.id)}
                           />
+                          <Button
+                            size="sm"
+                            onClick={() => handleCommentSubmit(post.id)}
+                            disabled={!commentInputs[post.id]?.trim() || submittingComments.has(post.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            {submittingComments.has(post.id) ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4" />
+                            )}
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -372,6 +513,23 @@ const Feed = () => {
               </Card>
             ))}
           </div>
+
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          )}
+
+          {/* Load more trigger */}
+          <div ref={loadMoreRef} className="h-4" />
+
+          {/* End of feed message */}
+          {!hasMore && posts.length > 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              You've reached the end of the feed!
+            </div>
+          )}
         </div>
       </div>
     </div>

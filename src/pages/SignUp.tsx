@@ -4,24 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import UniversitySearch from '@/components/UniversitySearch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Mail, Lock, User, GraduationCap } from 'lucide-react';
 
-const universities = [
-  'Harvard University',
-  'Stanford University',
-  'MIT',
-  'University of California, Berkeley',
-  'Yale University',
-  'Princeton University',
-  'Columbia University',
-  'University of Pennsylvania',
-  'Cornell University',
-  'Brown University'
-];
+// Universities are now loaded from the comprehensive database
 
 export default function SignUp() {
   const { signup, isLoading } = useAuth();
@@ -158,19 +147,16 @@ export default function SignUp() {
 
             <div className="space-y-2">
               <Label htmlFor="university">University</Label>
-              <Select value={formData.university} onValueChange={(value) => handleInputChange('university', value)}>
-                <SelectTrigger className={errors.university ? 'border-destructive' : ''}>
-                  <SelectValue placeholder="Select your university" />
-                </SelectTrigger>
-                <SelectContent>
-                  {universities.map((uni) => (
-                    <SelectItem key={uni} value={uni}>
-                      {uni}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <UniversitySearch
+                value={formData.university}
+                onValueChange={(value) => handleInputChange('university', value)}
+                placeholder="Search and select your university..."
+                className={errors.university ? 'border-destructive' : ''}
+              />
               {errors.university && <p className="text-sm text-destructive">{errors.university}</p>}
+              <p className="text-xs text-muted-foreground">
+                Search for any US university, college, community college, or technical institute
+              </p>
             </div>
 
             <div className="space-y-2">
