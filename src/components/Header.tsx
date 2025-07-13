@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Users, MessageSquare, Home, ShoppingBag, Calendar, FileText, User, Settings, LogOut } from "lucide-react";
+import { Users, MessageSquare, Home, ShoppingBag, Calendar, FileText, User, Settings, LogOut, Eye, Edit } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -88,27 +88,27 @@ const Header = () => {
                   <span className="hidden md:block">{user.name.split(' ')[0]}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Profile
+              <DropdownMenuContent align="end" className="w-56 bg-white shadow-lg border border-gray-200 rounded-lg">
+                <DropdownMenuItem asChild className="hover:bg-blue-50 transition-colors">
+                  <Link to="/profile/view" className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    View Profile
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="hover:bg-blue-50 transition-colors">
+                  <Link to="/profile" className="flex items-center gap-2">
+                    <Edit className="h-4 w-4" />
+                    Edit Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className="hover:bg-blue-50 transition-colors">
                   <Link to="/messages" className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
                     Messages
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/settings" className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout} className="flex items-center gap-2 text-destructive">
+                <DropdownMenuItem onClick={logout} className="flex items-center gap-2 text-destructive hover:bg-red-50 transition-colors">
                   <LogOut className="h-4 w-4" />
                   Sign Out
                 </DropdownMenuItem>
