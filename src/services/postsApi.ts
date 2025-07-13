@@ -1,4 +1,5 @@
 import { tokenManager } from '../utils/tokenManager';
+import Config from '../utils/config';
 
 export interface Post {
   id: string;
@@ -76,7 +77,7 @@ export interface LikeResponse {
 }
 
 class PostsApiService {
-  private baseUrl = '/api';
+  private baseUrl = Config.API_BASE_URL;
 
   private async request<T>(
     endpoint: string,
@@ -140,11 +141,11 @@ class PostsApiService {
     if (cursor) params.append('cursor', cursor);
     params.append('limit', limit.toString());
 
-    return this.request<PostsResponse>(`/posts?${params}`);
+    return this.request<PostsResponse>(`${Config.POSTS_ENDPOINT}?${params}`);
   }
 
   async getPost(postId: string): Promise<Post> {
-    return this.request<Post>(`/posts/${postId}`);
+    return this.request<Post>(`${Config.POSTS_ENDPOINT}/${postId}`);
   }
 
   async createPost(data: CreatePostRequest): Promise<CreatePostResponse> {
@@ -160,9 +161,9 @@ class PostsApiService {
         formData.append(`images`, image);
       });
 
-      return this.uploadRequest<CreatePostResponse>('/posts', formData);
+      return this.uploadRequest<CreatePostResponse>(Config.POSTS_ENDPOINT, formData);
     } else {
-      return this.request<CreatePostResponse>('/posts', {
+      return this.request<CreatePostResponse>(Config.POSTS_ENDPOINT, {
         method: 'POST',
         body: JSON.stringify(data),
       });
@@ -170,26 +171,26 @@ class PostsApiService {
   }
 
   async updatePost(postId: string, data: Partial<CreatePostRequest>): Promise<Post> {
-    return this.request<Post>(`/posts/${postId}`, {
+    return this.request<Post>(`${Config.POSTS_ENDPOINT}/${postId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
   async deletePost(postId: string): Promise<void> {
-    return this.request<void>(`/posts/${postId}`, {
+    return this.request<void>(`${Config.POSTS_ENDPOINT}/${postId}`, {
       method: 'DELETE',
     });
   }
 
   async likePost(postId: string): Promise<LikeResponse> {
-    return this.request<LikeResponse>(`/posts/${postId}/like`, {
+    return this.request<LikeResponse>(`${Config.POSTS_ENDPOINT}/${postId}/like`, {
       method: 'POST',
     });
   }
 
   async savePost(postId: string): Promise<{ saved: boolean }> {
-    return this.request<{ saved: boolean }>(`/posts/${postId}/save`, {
+    return this.request<{ saved: boolean }>(`${Config.POSTS_ENDPOINT}/${postId}/save`, {
       method: 'POST',
     });
   }
@@ -199,24 +200,24 @@ class PostsApiService {
     if (cursor) params.append('cursor', cursor);
     params.append('limit', limit.toString());
 
-    return this.request<CommentsResponse>(`/posts/${postId}/comments?${params}`);
+    return this.request<CommentsResponse>(`${Config.POSTS_ENDPOINT}/${postId}/comments?${params}`);
   }
 
   async createComment(postId: string, data: CreateCommentRequest): Promise<CreateCommentResponse> {
-    return this.request<CreateCommentResponse>(`/posts/${postId}/comments`, {
+    return this.request<CreateCommentResponse>(`${Config.POSTS_ENDPOINT}/${postId}/comments`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async likeComment(commentId: string): Promise<LikeResponse> {
-    return this.request<LikeResponse>(`/comments/${commentId}/like`, {
+    return this.request<LikeResponse>(`/api/comments/${commentId}/like`, {
       method: 'POST',
     });
   }
 
   async deleteComment(commentId: string): Promise<void> {
-    return this.request<void>(`/comments/${commentId}`, {
+    return this.request<void>(`/api/comments/${commentId}`, {
       method: 'DELETE',
     });
   }
@@ -227,7 +228,7 @@ class PostsApiService {
     if (cursor) params.append('cursor', cursor);
     params.append('limit', limit.toString());
 
-    return this.request<PostsResponse>(`/posts/search?${params}`);
+    return this.request<PostsResponse>(`${Config.POSTS_ENDPOINT}/search?${params}`);
   }
 
   async getHashtagPosts(hashtag: string, cursor?: string, limit = 10): Promise<PostsResponse> {
@@ -235,7 +236,7 @@ class PostsApiService {
     if (cursor) params.append('cursor', cursor);
     params.append('limit', limit.toString());
 
-    return this.request<PostsResponse>(`/posts/hashtag/${encodeURIComponent(hashtag)}?${params}`);
+    return this.request<PostsResponse>(`${Config.POSTS_ENDPOINT}/hashtag/${encodeURIComponent(hashtag)}?${params}`);
   }
 
   async getUserPosts(userId: string, cursor?: string, limit = 10): Promise<PostsResponse> {
@@ -243,14 +244,14 @@ class PostsApiService {
     if (cursor) params.append('cursor', cursor);
     params.append('limit', limit.toString());
 
-    return this.request<PostsResponse>(`/users/${userId}/posts?${params}`);
+    return this.request<PostsResponse>(`/api/users/${userId}/posts?${params}`);
   }
 
   async uploadImage(file: File): Promise<{ url: string; id: string }> {
     const formData = new FormData();
     formData.append('image', file);
 
-    return this.uploadRequest<{ url: string; id: string }>('/upload/image', formData);
+    return this.uploadRequest<{ url: string; id: string }>('/api/upload/image', formData);
   }
 }
 

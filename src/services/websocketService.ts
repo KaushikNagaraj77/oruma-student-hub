@@ -1,5 +1,6 @@
 import { tokenManager } from '../utils/tokenManager';
 import { Message } from './messagingApi';
+import Config from '../utils/config';
 
 export interface WebSocketMessage {
   type: 'message_received' | 'message_read' | 'user_typing' | 'user_online' | 'user_offline' | 
@@ -68,7 +69,7 @@ export class WebSocketService {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private isConnecting = false;
 
-  constructor(private wsUrl: string = 'ws://localhost:3001') {}
+  constructor(private wsUrl: string = Config.WEBSOCKET_URL) {}
 
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -264,4 +265,4 @@ export class WebSocketService {
   }
 }
 
-export const websocketService = new WebSocketService();
+export const websocketService = new WebSocketService(Config.WEBSOCKET_URL);

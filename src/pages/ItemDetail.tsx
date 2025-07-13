@@ -1,78 +1,113 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ChevronLeft, ChevronRight, Star, User, MapPin, Calendar, Shield, Heart, Share2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, User, MapPin, Calendar, Shield, Heart, Share2, Loader2, ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import { MessageButton } from "@/components/MessageButton";
+import { useMarketplace } from "@/contexts/MarketplaceContext";
+import { MarketplaceProvider } from "@/contexts/MarketplaceContext";
 
-const ItemDetail = () => {
+const ItemDetailContent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const {
+    currentItem: item,
+    loadingItem,
+    similarItems,
+    loadItem,
+    loadSimilarItems,
+    saveItem,
+    markAsViewed
+  } = useMarketplace();
 
-  // Mock data - in real app, this would come from API
-  const item = {
-    id: 1,
-    sellerId: "2",
-    title: "MacBook Pro 13\" 2021",
-    price: "$1,200",
-    condition: "Like New",
-    category: "Electronics",
-    seller: "Emma Davis",
-    university: "Stanford University",
-    rating: 4.9,
-    reviewCount: 47,
-    postedDate: "2 days ago",
-    description: "Barely used MacBook Pro perfect for students. This laptop has been my reliable companion throughout my computer science studies, but I'm upgrading to a newer model. It comes with the original charger, a premium leather case, and all original packaging. The battery health is still at 96%, and there are no scratches or dents. Perfect for programming, design work, and everyday tasks. Selling because I got a new 16-inch model for my internship.",
-    images: [
-      "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&h=600",
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&h=600",
-      "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?auto=format&fit=crop&w=800&h=600",
-      "https://images.unsplash.com/photo-1484788984921-03950022c9ef?auto=format&fit=crop&w=800&h=600"
-    ],
-    specifications: [
-      { label: "Model", value: "MacBook Pro 13-inch 2021" },
-      { label: "Processor", value: "Apple M1 Chip" },
-      { label: "Memory", value: "8GB RAM" },
-      { label: "Storage", value: "256GB SSD" },
-      { label: "Color", value: "Space Gray" }
-    ]
-  };
-
-  const similarItems = [
-    {
-      id: 2,
-      title: "iPad Pro 11-inch",
-      price: "$800",
-      condition: "Excellent",
-      image: "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=400&h=400"
-    },
-    {
-      id: 3,
-      title: "MacBook Air M1",
-      price: "$900",
-      condition: "Good",
-      image: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=400&h=400"
-    },
-    {
-      id: 4,
-      title: "Magic Keyboard",
-      price: "$120",
-      condition: "Like New",
-      image: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=400&h=400"
+  useEffect(() => {
+    if (id) {
+      loadItem(id);
+      loadSimilarItems(id);
+      markAsViewed(id);
     }
-  ];
+  }, [id]);
+
+  useEffect(() => {
+    if (item && item.images && item.images.length > 0) {
+      setCurrentImageIndex(0);
+    }
+  }, [item]);
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % item.images.length);
+    if (item?.images) {
+      setCurrentImageIndex((prev) => (prev + 1) % item.images.length);
+    }
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + item.images.length) % item.images.length);
+    if (item?.images) {
+      setCurrentImageIndex((prev) => (prev - 1 + item.images.length) % item.images.length);
+    }
   };
+
+  const handleSaveItem = async () => {
+    if (item) {
+      await saveItem(item.id);
+    }
+  };
+
+  const handleSimilarItemClick = (itemId: string) => {
+    navigate(`/marketplace/item/${itemId}`);
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    return `${diffInWeeks}w ago`;
+  };
+
+  if (loadingItem) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!item) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold mb-4">Item not found</h2>
+            <p className="text-muted-foreground mb-6">
+              The item you're looking for doesn't exist or has been removed.
+            </p>
+            <Button onClick={() => navigate('/marketplace')} variant="outline">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Marketplace
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -168,8 +203,13 @@ const ItemDetail = () => {
               <div className="flex items-start justify-between mb-2">
                 <h1 className="text-3xl font-bold text-foreground">{item.title}</h1>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="icon">
-                    <Heart className="h-4 w-4" />
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    onClick={handleSaveItem}
+                    className={item.saved ? 'text-red-500' : ''}
+                  >
+                    <Heart className={`h-4 w-4 ${item.saved ? 'fill-current' : ''}`} />
                   </Button>
                   <Button variant="outline" size="icon">
                     <Share2 className="h-4 w-4" />
@@ -178,7 +218,7 @@ const ItemDetail = () => {
               </div>
               
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl font-bold text-primary">{item.price}</span>
+                <span className="text-3xl font-bold text-primary">${item.price}</span>
                 <Badge variant="secondary" className="font-medium">
                   {item.condition}
                 </Badge>
@@ -195,17 +235,17 @@ const ItemDetail = () => {
                       <User className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{item.seller}</CardTitle>
+                      <CardTitle className="text-lg">{item.seller.name}</CardTitle>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span>{item.rating}</span>
-                        <span>({item.reviewCount} reviews)</span>
+                        <span>{item.seller.rating}</span>
+                        <span>({item.seller.reviewCount} reviews)</span>
                       </div>
                     </div>
                   </div>
                   <MessageButton 
                     userId={item.sellerId} 
-                    userName={item.seller}
+                    userName={item.seller.name}
                   />
                 </div>
               </CardHeader>
@@ -213,11 +253,11 @@ const ItemDetail = () => {
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <MapPin className="w-4 h-4" />
-                    <span>{item.university}</span>
+                    <span>{item.seller.university}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    <span>Posted {item.postedDate}</span>
+                    <span>Posted {getTimeAgo(item.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Shield className="w-4 h-4" />
@@ -238,52 +278,68 @@ const ItemDetail = () => {
             </Card>
 
             {/* Specifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Specifications</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {item.specifications.map((spec, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span className="text-muted-foreground">{spec.label}</span>
-                      <span className="font-medium">{spec.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {item.specifications && item.specifications.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Specifications</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {item.specifications.map((spec, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <span className="text-muted-foreground">{spec.label}</span>
+                        <span className="font-medium">{spec.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
 
         {/* Similar Items */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6">Similar Items</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {similarItems.map((item) => (
-              <Card key={item.id} className="group hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-                <div className="aspect-square bg-muted rounded-t-lg overflow-hidden">
-                  <img 
-                    src={item.image}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg font-semibold line-clamp-2">{item.title}</CardTitle>
-                    <span className="text-lg font-bold text-primary">{item.price}</span>
+        {similarItems.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-6">Similar Items</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {similarItems.map((similarItem) => (
+                <Card 
+                  key={similarItem.id} 
+                  className="group hover:shadow-[var(--shadow-card)] transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                  onClick={() => handleSimilarItemClick(similarItem.id)}
+                >
+                  <div className="aspect-square bg-muted rounded-t-lg overflow-hidden">
+                    <img 
+                      src={similarItem.images[0] || "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=400&h=400"}
+                      alt={similarItem.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
-                  <CardDescription className="text-sm text-muted-foreground">
-                    Condition: {item.condition}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg font-semibold line-clamp-2">{similarItem.title}</CardTitle>
+                      <span className="text-lg font-bold text-primary">${similarItem.price}</span>
+                    </div>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      Condition: {similarItem.condition}
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
+  );
+};
+
+const ItemDetail = () => {
+  return (
+    <MarketplaceProvider>
+      <ItemDetailContent />
+    </MarketplaceProvider>
   );
 };
 

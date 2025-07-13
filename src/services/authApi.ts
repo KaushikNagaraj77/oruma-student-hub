@@ -1,5 +1,6 @@
 import { tokenManager } from '../utils/tokenManager';
 import { mockAuthApi } from './mockAuthApi';
+import Config from '../utils/config';
 
 interface LoginRequest {
   email: string;
@@ -51,7 +52,7 @@ interface RefreshTokenResponse {
 }
 
 class AuthApiService {
-  private baseUrl = '/api/auth';
+  private baseUrl = Config.AUTH_ENDPOINT;
   private useMockApi = false; // Set to false when real backend is available
 
   private async request<T>(

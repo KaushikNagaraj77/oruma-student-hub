@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { MessagingProvider } from "@/contexts/MessagingContext";
+import { EventsProvider } from "@/contexts/EventsContext";
 import Index from "./pages/Index";
 import Feed from "./pages/Feed";
 import Marketplace from "./pages/Marketplace";
@@ -27,7 +28,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <MessagingProvider>
-        <TooltipProvider>
+        <EventsProvider>
+          <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -49,7 +51,8 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
-        </TooltipProvider>
+          </TooltipProvider>
+        </EventsProvider>
       </MessagingProvider>
     </AuthProvider>
   </QueryClientProvider>

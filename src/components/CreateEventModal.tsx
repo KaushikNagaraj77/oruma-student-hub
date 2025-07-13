@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Upload, X, ImagePlus, Calendar as CalendarIcon, Clock, MapPin } from "l
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useEvents } from "@/contexts/EventsContext";
 
 interface CreateEventModalProps {
   open: boolean;
@@ -24,6 +25,7 @@ const eventCategories = [
 
 export const CreateEventModal = ({ open, onOpenChange }: CreateEventModalProps) => {
   const { toast } = useToast();
+  const { createEvent } = useEvents();
   const [bannerImage, setBannerImage] = useState<File | null>(null);
   const [eventDate, setEventDate] = useState<Date>();
   const [formData, setFormData] = useState({
@@ -37,6 +39,74 @@ export const CreateEventModal = ({ open, onOpenChange }: CreateEventModalProps) 
     registrationRequired: "true"
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+  // Generate time options for dropdowns
+  const generateTimeOptions = () => {
+    const times = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) { // 15-minute intervals
+        const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const displayTime = new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        times.push({ value: timeString, label: displayTime });
+      }
+    }
+    return times;
+  };
+
+  const timeOptions = generateTimeOptions();
+
+  // Get filtered time options for end time (must be after start time)
+  const getEndTimeOptions = () => {
+    if (!formData.startTime) return timeOptions;
+    
+    const startTimeIndex = timeOptions.findIndex(time => time.value === formData.startTime);
+    if (startTimeIndex === -1) return timeOptions;
+    
+    // Return times that are at least 15 minutes after start time
+    return timeOptions.slice(startTimeIndex + 1);
+  };
+
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (!open) {
+      // Reset form when modal closes
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        location: "",
+        startTime: "",
+        endTime: "",
+        capacity: "",
+        registrationRequired: "true"
+      });
+      setBannerImage(null);
+      setEventDate(undefined);
+      setErrors({});
+      setHasSubmitted(false);
+    } else {
+      // Set default times when modal opens (if not already set)
+      const now = new Date();
+      const nextHour = new Date(now);
+      nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+      const twoHoursLater = new Date(nextHour);
+      twoHoursLater.setHours(nextHour.getHours() + 1);
+      
+      const defaultStartTime = `${nextHour.getHours().toString().padStart(2, '0')}:00`;
+      const defaultEndTime = `${twoHoursLater.getHours().toString().padStart(2, '0')}:00`;
+      
+      setFormData(prev => ({
+        ...prev,
+        startTime: prev.startTime || defaultStartTime,
+        endTime: prev.endTime || defaultEndTime
+      }));
+    }
+  }, [open]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,7 +121,8 @@ export const CreateEventModal = ({ open, onOpenChange }: CreateEventModalProps) 
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
+    // Only clear errors if the user has attempted to submit
+    if (hasSubmitted && errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
     }
   };
@@ -80,8 +151,23 @@ export const CreateEventModal = ({ open, onOpenChange }: CreateEventModalProps) 
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Validate form in real-time after first submission attempt
+  useEffect(() => {
+    if (hasSubmitted) {
+      validateForm();
+    }
+  }, [formData, eventDate, hasSubmitted]);
+
+  // Clear end time if it becomes invalid when start time changes
+  useEffect(() => {
+    if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
+      setFormData(prev => ({ ...prev, endTime: "" }));
+    }
+  }, [formData.startTime]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHasSubmitted(true);
     
     if (!validateForm()) {
       toast({
@@ -92,27 +178,42 @@ export const CreateEventModal = ({ open, onOpenChange }: CreateEventModalProps) 
       return;
     }
 
-    // Simulate form submission
-    toast({
-      title: "Event created successfully!",
-      description: "Your event has been posted and is visible to students.",
-    });
-    
-    // Reset form
-    setFormData({
-      title: "",
-      description: "",
-      category: "",
-      location: "",
-      startTime: "",
-      endTime: "",
-      capacity: "",
-      registrationRequired: "true"
-    });
-    setBannerImage(null);
-    setEventDate(undefined);
-    setErrors({});
-    onOpenChange(false);
+    try {
+      const eventData = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        date: eventDate!.toISOString().split('T')[0], // Convert to ISO date string
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        location: formData.location,
+        capacity: parseInt(formData.capacity),
+        registrationRequired: formData.registrationRequired === "true",
+        bannerImage: bannerImage || undefined,
+      };
+
+      await createEvent(eventData);
+      
+      // Reset form
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        location: "",
+        startTime: "",
+        endTime: "",
+        capacity: "",
+        registrationRequired: "true"
+      });
+      setBannerImage(null);
+      setEventDate(undefined);
+      setErrors({});
+      setHasSubmitted(false);
+      onOpenChange(false);
+    } catch (error) {
+      // Error is already handled by the context
+      console.error('Failed to create event:', error);
+    }
   };
 
   return (
@@ -260,32 +361,48 @@ export const CreateEventModal = ({ open, onOpenChange }: CreateEventModalProps) 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time *</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={formData.startTime}
-                  onChange={(e) => handleInputChange("startTime", e.target.value)}
-                  className={`pl-10 ${errors.startTime ? "border-destructive" : ""}`}
-                />
-              </div>
+              <Label>Start Time *</Label>
+              <Select 
+                value={formData.startTime} 
+                onValueChange={(value) => handleInputChange("startTime", value)}
+              >
+                <SelectTrigger className={errors.startTime ? "border-destructive" : ""}>
+                  <div className="flex items-center">
+                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Select start time" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  {timeOptions.map((time) => (
+                    <SelectItem key={time.value} value={time.value}>
+                      {time.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.startTime && <p className="text-sm text-destructive">{errors.startTime}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="endTime">End Time *</Label>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => handleInputChange("endTime", e.target.value)}
-                  className={`pl-10 ${errors.endTime ? "border-destructive" : ""}`}
-                />
-              </div>
+              <Label>End Time *</Label>
+              <Select 
+                value={formData.endTime} 
+                onValueChange={(value) => handleInputChange("endTime", value)}
+              >
+                <SelectTrigger className={errors.endTime ? "border-destructive" : ""}>
+                  <div className="flex items-center">
+                    <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Select end time" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="max-h-[200px]">
+                  {getEndTimeOptions().map((time) => (
+                    <SelectItem key={time.value} value={time.value}>
+                      {time.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.endTime && <p className="text-sm text-destructive">{errors.endTime}</p>}
             </div>
           </div>

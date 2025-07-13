@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, X, ImagePlus } from "lucide-react";
+import { Upload, X, ImagePlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useMarketplace } from "@/contexts/MarketplaceContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SellItemModalProps {
   open: boolean;
@@ -28,14 +30,17 @@ const universities = [
 
 export const SellItemModal = ({ open, onOpenChange }: SellItemModalProps) => {
   const { toast } = useToast();
+  const { createItem } = useMarketplace();
+  const { user } = useAuth();
   const [images, setImages] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     price: "",
     category: "",
     condition: "",
-    university: ""
+    location: ""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -74,14 +79,13 @@ export const SellItemModal = ({ open, onOpenChange }: SellItemModalProps) => {
     }
     if (!formData.category) newErrors.category = "Category is required";
     if (!formData.condition) newErrors.condition = "Condition is required";
-    if (!formData.university) newErrors.university = "University is required";
     if (images.length === 0) newErrors.images = "At least one image is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -93,24 +97,39 @@ export const SellItemModal = ({ open, onOpenChange }: SellItemModalProps) => {
       return;
     }
 
-    // Simulate form submission
-    toast({
-      title: "Item listed successfully!",
-      description: "Your item has been posted to the marketplace.",
-    });
+    setIsSubmitting(true);
     
-    // Reset form
-    setFormData({
-      title: "",
-      description: "",
-      price: "",
-      category: "",
-      condition: "",
-      university: ""
-    });
-    setImages([]);
-    setErrors({});
-    onOpenChange(false);
+    try {
+      await createItem({
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        price: Number(formData.price),
+        condition: formData.condition,
+        category: formData.category,
+        location: formData.location.trim() || undefined,
+        images: images,
+        tags: []
+      });
+      
+      // Reset form on success
+      setFormData({
+        title: "",
+        description: "",
+        price: "",
+        category: "",
+        condition: "",
+        location: ""
+      });
+      setImages([]);
+      setErrors({});
+      onOpenChange(false);
+      
+    } catch (error) {
+      // Error is already handled by the context
+      console.error('Failed to create item:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -250,31 +269,38 @@ export const SellItemModal = ({ open, onOpenChange }: SellItemModalProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label>University *</Label>
-              <Select value={formData.university} onValueChange={(value) => handleInputChange("university", value)}>
-                <SelectTrigger className={errors.university ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select university" />
-                </SelectTrigger>
-                <SelectContent>
-                  {universities.map((university) => (
-                    <SelectItem key={university} value={university}>
-                      {university}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.university && <p className="text-sm text-destructive">{errors.university}</p>}
+              <Label htmlFor="location">Location (optional)</Label>
+              <Input
+                id="location"
+                placeholder="e.g., Dorm Building A, Near Library"
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+              />
             </div>
           </div>
 
           {/* Submit Buttons */}
           <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="hero">
-              <Upload className="w-4 h-4 mr-2" />
-              List Item
+            <Button type="submit" variant="hero" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Listing...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-4 h-4 mr-2" />
+                  List Item
+                </>
+              )}
             </Button>
           </div>
         </form>
