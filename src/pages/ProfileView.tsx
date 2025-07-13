@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/Header';
 import { 
   MessageSquare, 
@@ -13,32 +12,27 @@ import {
   Calendar, 
   BookOpen, 
   Award, 
-  Shield, 
-  MapPin, 
-  Eye, 
-  EyeOff,
-  Star,
-  TrendingUp,
-  Activity,
-  BookMarked,
+  Heart,
+  Share,
+  MoreHorizontal,
+  Plus,
+  Settings,
+  UserPlus,
   Coffee,
   CheckCircle,
-  Globe,
   Building2,
   GraduationCap,
-  Target,
-  Heart,
-  PlusCircle
+  MapPin,
+  Grid3X3,
+  Camera,
+  Trophy,
+  Briefcase,
+  Info
 } from 'lucide-react';
 
 export default function ProfileView() {
   const { user } = useAuth();
-  const [showGPA, setShowGPA] = useState(true);
-  const [privacySettings, setPrivacySettings] = useState({
-    profile: 'All Universities',
-    academic: 'My University Only',
-    activities: 'Circle Only'
-  });
+  const [activeTab, setActiveTab] = useState('posts');
 
   const profileData = {
     name: user?.name || 'Alex Johnson',
@@ -46,68 +40,107 @@ export default function ProfileView() {
     university: 'Stanford University',
     year: 'Junior',
     major: 'Computer Science',
-    minor: 'Mathematics',
-    gpa: 3.8,
-    progress: 75,
+    bio: 'Passionate CS student who loves building apps and organizing study groups 🚀 Always down for coffee chats about tech!',
     avatar: user?.avatar || '',
-    verified: true,
-    currentCourses: 5,
-    bio: 'Passionate about technology and connecting with fellow students. Always up for study groups and campus events!'
+    coverPhoto: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=1000&auto=format&fit=crop',
+    circleCount: 234,
+    posts: 42,
+    following: 156,
+    followers: 89
   };
 
-  const achievements = [
-    { title: "Dean's List Fall 2024", icon: Award, color: "text-yellow-600" },
-    { title: "Scholarship Recipient", icon: Star, color: "text-blue-600" },
-    { title: "Certified Python Tutor", icon: BookMarked, color: "text-green-600" },
-    { title: "Study Group Leader", icon: Users, color: "text-purple-600" }
+  const posts = [
+    {
+      id: 1,
+      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=400&auto=format&fit=crop',
+      caption: 'Late night coding session at the library! Working on my React project 💻',
+      likes: 24,
+      comments: 8,
+      timeAgo: '2h'
+    },
+    {
+      id: 2,
+      image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?q=80&w=400&auto=format&fit=crop',
+      caption: 'Study group setup for our algorithms exam tomorrow! Thanks team 📚',
+      likes: 31,
+      comments: 12,
+      timeAgo: '1d'
+    },
+    {
+      id: 3,
+      image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?q=80&w=400&auto=format&fit=crop',
+      caption: 'Celebrating the end of midterms with some good food! 🎉',
+      likes: 18,
+      comments: 5,
+      timeAgo: '3d'
+    },
+    {
+      id: 4,
+      image: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?q=80&w=400&auto=format&fit=crop',
+      caption: 'Beautiful sunset after a productive day on campus 🌅',
+      likes: 45,
+      comments: 15,
+      timeAgo: '5d'
+    },
+    {
+      id: 5,
+      image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop',
+      caption: 'Weekend hiking trip with the CS club! Nature is the best debugger 🏔️',
+      likes: 67,
+      comments: 23,
+      timeAgo: '1w'
+    },
+    {
+      id: 6,
+      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=400&auto=format&fit=crop',
+      caption: 'Hackathon prep mode: activated! 48 hours to build something amazing ⚡',
+      likes: 38,
+      comments: 14,
+      timeAgo: '1w'
+    }
   ];
 
-  const recentActivities = [
+  const achievements = [
+    { title: "Dean's List Fall 2024", icon: '🏆', description: 'Academic Excellence' },
+    { title: "Hackathon Winner", icon: '🥇', description: 'Best Mobile App 2024' },
+    { title: "Study Group Leader", icon: '👥', description: 'Leading 3 groups' },
+    { title: "Scholarship Recipient", icon: '💰', description: 'Merit-based award' }
+  ];
+
+  const projects = [
     {
-      type: 'post',
-      content: 'Just finished my Data Structures assignment! Looking for study partners for the upcoming exam.',
-      engagement: '12 likes • 5 comments',
-      time: '2 hours ago'
+      title: 'Campus Connect App',
+      description: 'Social platform connecting students across universities',
+      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=400&auto=format&fit=crop',
+      tech: ['React', 'Node.js', 'MongoDB']
     },
     {
-      type: 'event',
-      content: 'Attended "AI in Healthcare" seminar',
-      engagement: 'Networked with 8 students',
-      time: '1 day ago'
-    },
-    {
-      type: 'study',
-      content: 'Led Calculus III study group',
-      engagement: '6 participants',
-      time: '3 days ago'
+      title: 'Study Buddy Finder',
+      description: 'AI-powered matching system for study partners',
+      image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?q=80&w=400&auto=format&fit=crop',
+      tech: ['Python', 'TensorFlow', 'Flask']
     }
   ];
 
   const studyGroups = [
-    { name: 'Organic Chemistry Masters', role: 'Leader', members: 12, subject: 'Chemistry' },
-    { name: 'Data Structures & Algorithms', role: 'Member', members: 8, subject: 'Computer Science' },
-    { name: 'Linear Algebra Study Circle', role: 'Member', members: 6, subject: 'Mathematics' },
-    { name: 'Machine Learning Enthusiasts', role: 'Co-leader', members: 15, subject: 'AI/ML' }
+    { 
+      name: 'Algorithms & Data Structures', 
+      members: ['Sarah', 'Mike', 'Emma', '+5'],
+      memberCount: 8,
+      subject: 'Computer Science'
+    },
+    { 
+      name: 'Calculus Study Circle', 
+      members: ['John', 'Lisa', 'Alex', '+3'],
+      memberCount: 6,
+      subject: 'Mathematics'
+    }
   ];
 
-  const recentEvents = [
-    { name: 'Tech Career Fair', date: 'Nov 15', attendees: 200, type: 'attended' },
-    { name: 'Study Skills Workshop', date: 'Nov 10', attendees: 45, type: 'organized' },
-    { name: 'CS Department Mixer', date: 'Nov 5', attendees: 80, type: 'attended' }
-  ];
-
-  const endorsements = [
-    { skill: 'Python Programming', count: 23 },
-    { skill: 'Study Leadership', count: 18 },
-    { skill: 'Team Collaboration', count: 15 },
-    { skill: 'Mathematics Tutoring', count: 12 }
-  ];
-
-  const circleMembers = [
-    { name: 'Sarah Chen', university: 'MIT', major: 'Computer Science', avatar: '' },
-    { name: 'Marcus Williams', university: 'Harvard', major: 'Biology', avatar: '' },
-    { name: 'Emma Rodriguez', university: 'Stanford', major: 'Engineering', avatar: '' },
-    { name: 'James Kim', university: 'Berkeley', major: 'Mathematics', avatar: '' }
+  const organizations = [
+    { name: 'Computer Science Club', role: 'Vice President', logo: '💻' },
+    { name: 'Coding Bootcamp', role: 'Mentor', logo: '🎓' },
+    { name: 'Hackathon Society', role: 'Member', logo: '⚡' }
   ];
 
   if (!user) {
@@ -129,335 +162,292 @@ export default function ProfileView() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       
-      <div className="container py-8 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Left Column - Academic Identity */}
-          <div className="lg:col-span-1 space-y-6">
-            
-            {/* Profile Header */}
-            <Card className="bg-white shadow-sm">
-              <CardContent className="p-6">
-                <div className="text-center space-y-4">
-                  <div className="relative inline-block">
-                    <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
-                      <AvatarImage src={profileData.avatar} alt={profileData.name} />
-                      <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                        {profileData.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    {profileData.verified && (
-                      <div className="absolute -bottom-1 -right-1">
-                        <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          Verified
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                  
+      {/* Cover Photo & Profile Header */}
+      <div className="relative">
+        {/* Cover Photo */}
+        <div 
+          className="h-64 md:h-80 bg-cover bg-center relative"
+          style={{ backgroundImage: `url(${profileData.coverPhoto})` }}
+        >
+          <div className="absolute inset-0 bg-black/20"></div>
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            className="absolute top-4 right-4 bg-white/90 hover:bg-white"
+          >
+            <Camera className="h-4 w-4 mr-2" />
+            Edit Cover
+          </Button>
+        </div>
+
+        {/* Profile Info Overlay */}
+        <div className="relative -mt-20 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-5">
+              {/* Profile Picture */}
+              <div className="relative group">
+                <Avatar className="h-32 w-32 border-4 border-white shadow-xl">
+                  <AvatarImage src={profileData.avatar} alt={profileData.name} />
+                  <AvatarFallback className="text-4xl bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    {profileData.name.split(' ').map(n => n[0]).join('')}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -top-1 -right-1">
+                  <Badge className="bg-green-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Verified
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Profile Info */}
+              <div className="mt-6 sm:mt-0 sm:flex-1 sm:min-w-0">
+                <div className="flex items-center justify-between">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900">{profileData.name}</h1>
-                    <p className="text-blue-600 font-medium flex items-center justify-center gap-2">
+                    <div className="flex items-center space-x-2 text-gray-600 mt-1">
                       <Building2 className="h-4 w-4" />
-                      {profileData.university}
+                      <span>{profileData.university}</span>
+                      <span>•</span>
+                      <span>{profileData.year}</span>
+                      <span>•</span>
+                      <GraduationCap className="h-4 w-4" />
+                      <span>{profileData.major}</span>
+                    </div>
+                    <p className="text-blue-600 font-semibold text-lg mt-2">
+                      {profileData.circleCount} people in your circle
                     </p>
                   </div>
 
-                  {/* Academic Progress */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">{profileData.year} Year</span>
-                      <span className="text-blue-600 font-medium">{profileData.progress}% Complete</span>
-                    </div>
-                    <Progress value={profileData.progress} className="h-2" />
-                  </div>
-
-                  {/* Major/Minor */}
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center justify-center gap-2 text-gray-700">
-                      <GraduationCap className="h-4 w-4" />
-                      <span className="font-medium">{profileData.major}</span>
-                    </div>
-                    <p className="text-sm text-gray-500">{profileData.minor} Minor</p>
-                  </div>
-
-                  {/* GPA */}
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-lg font-bold text-gray-900">
-                      {showGPA ? `${profileData.gpa} GPA` : 'GPA Hidden'}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowGPA(!showGPA)}
-                      className="h-6 w-6 p-0"
-                    >
-                      {showGPA ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    </Button>
-                  </div>
-
-                  {/* Current Courses */}
-                  <Badge variant="outline" className="text-blue-600 border-blue-200">
-                    Taking {profileData.currentCourses} courses this semester
-                  </Badge>
-
                   {/* Action Buttons */}
-                  <div className="flex gap-2 pt-4">
-                    <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                  <div className="flex space-x-3">
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                       <MessageSquare className="h-4 w-4 mr-2" />
                       Message
                     </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button size="sm" variant="outline">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Add to Circle
+                    </Button>
+                    <Button size="sm" variant="outline">
                       <Coffee className="h-4 w-4 mr-2" />
                       Study Together
                     </Button>
+                    <Button size="sm" variant="ghost">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Achievements */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Award className="h-5 w-5 text-yellow-600" />
-                  Achievements
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {achievements.map((achievement, index) => (
-                  <div key={index} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50">
-                    <achievement.icon className={`h-5 w-5 ${achievement.color}`} />
-                    <span className="text-sm font-medium">{achievement.title}</span>
+                {/* Stats */}
+                <div className="flex space-x-6 mt-4">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-gray-900">{profileData.posts}</div>
+                    <div className="text-sm text-gray-500">Posts</div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Privacy Controls */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-gray-600" />
-                  Privacy Controls
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  {Object.entries(privacySettings).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center">
-                      <span className="text-sm capitalize">{key}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {value}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" size="sm" className="w-full text-xs">
-                  Manage Settings
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Middle Column - Activity & Engagement */}
-          <div className="lg:col-span-1 space-y-6">
-            
-            {/* Recent Activity */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-blue-600" />
-                  Recent Activity
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {recentActivities.map((activity, index) => (
-                  <div key={index} className="border-l-2 border-blue-200 pl-4 pb-4 last:pb-0">
-                    <p className="text-sm font-medium text-gray-900">{activity.content}</p>
-                    <p className="text-xs text-blue-600 mt-1">{activity.engagement}</p>
-                    <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-gray-900">{profileData.followers}</div>
+                    <div className="text-sm text-gray-500">Followers</div>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Study Groups */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5 text-purple-600" />
-                  Study Groups
-                </CardTitle>
-                <CardDescription>
-                  Leading 2 groups • Member of 4 groups
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {studyGroups.map((group, index) => (
-                  <div key={index} className="p-3 border rounded-lg hover:bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium text-sm">{group.name}</h4>
-                        <p className="text-xs text-gray-500">{group.subject}</p>
-                      </div>
-                      <Badge variant={group.role === 'Leader' ? 'default' : 'secondary'} className="text-xs">
-                        {group.role}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-gray-600 mt-2">{group.members} members</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
-            {/* Events */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-green-600" />
-                  Campus Events
-                </CardTitle>
-                <CardDescription>
-                  Attended 15 events • Organized 3
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {recentEvents.map((event, index) => (
-                  <div key={index} className="flex justify-between items-center p-2 rounded hover:bg-gray-50">
-                    <div>
-                      <p className="text-sm font-medium">{event.name}</p>
-                      <p className="text-xs text-gray-500">{event.date} • {event.attendees} attendees</p>
-                    </div>
-                    <Badge variant={event.type === 'organized' ? 'default' : 'outline'} className="text-xs">
-                      {event.type}
-                    </Badge>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Network & Skills */}
-          <div className="lg:col-span-1 space-y-6">
-            
-            {/* Your Circle */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Globe className="h-5 w-5 text-blue-600" />
-                  Your Circle
-                </CardTitle>
-                <CardDescription>
-                  234 people across universities
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {circleMembers.map((member, index) => (
-                    <div key={index} className="text-center p-3 border rounded-lg hover:bg-gray-50">
-                      <Avatar className="h-12 w-12 mx-auto mb-2">
-                        <AvatarImage src={member.avatar} alt={member.name} />
-                        <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                          {member.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <p className="text-xs font-medium">{member.name}</p>
-                      <p className="text-xs text-gray-500">{member.university}</p>
-                      <p className="text-xs text-blue-600">{member.major}</p>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="outline" size="sm" className="w-full">
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  View All Connections
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Study Compatibility */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Target className="h-5 w-5 text-green-600" />
-                  Study Compatibility
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-gray-600">Great match for:</p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge className="bg-green-100 text-green-700">Organic Chemistry</Badge>
-                  <Badge className="bg-blue-100 text-blue-700">Data Structures</Badge>
-                  <Badge className="bg-purple-100 text-purple-700">Linear Algebra</Badge>
-                </div>
-                <div className="pt-2">
-                  <Button size="sm" className="w-full bg-green-600 hover:bg-green-700">
-                    <Users className="h-4 w-4 mr-2" />
-                    Find Study Partners
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Endorsements */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Heart className="h-5 w-5 text-red-500" />
-                  Peer Endorsements
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {endorsements.map((endorsement, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{endorsement.skill}</span>
-                    <Badge variant="outline" className="text-xs">
-                      {endorsement.count}
-                    </Badge>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" className="w-full">
-                  Request Endorsement
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Campus Organizations */}
-            <Card className="bg-white shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-blue-600" />
-                  Campus Organizations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="p-3 border rounded-lg">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium">Computer Science Club</p>
-                      <p className="text-xs text-gray-500">Stanford University</p>
-                    </div>
-                    <Badge className="text-xs bg-blue-100 text-blue-700">
-                      Vice President
-                    </Badge>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-gray-900">{profileData.following}</div>
+                    <div className="text-sm text-gray-500">Following</div>
                   </div>
                 </div>
-                <div className="p-3 border rounded-lg">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium">Math Tutoring Society</p>
-                      <p className="text-xs text-gray-500">Stanford University</p>
-                    </div>
-                    <Badge variant="outline" className="text-xs">
-                      Member
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
+                {/* Bio */}
+                <p className="text-gray-700 mt-4 max-w-lg">{profileData.bio}</p>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Content Tabs */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsTrigger value="posts" className="flex items-center gap-2">
+              <Grid3X3 className="h-4 w-4" />
+              Posts
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-2">
+              <Camera className="h-4 w-4" />
+              Photos
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              Achievements
+            </TabsTrigger>
+            <TabsTrigger value="about" className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              About
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Posts Tab */}
+          <TabsContent value="posts" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {posts.map((post) => (
+                <Card key={post.id} className="overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow">
+                  <div className="relative">
+                    <img 
+                      src={post.image} 
+                      alt=""
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <div className="flex space-x-4 text-white">
+                        <div className="flex items-center">
+                          <Heart className="h-5 w-5 mr-1" />
+                          {post.likes}
+                        </div>
+                        <div className="flex items-center">
+                          <MessageSquare className="h-5 w-5 mr-1" />
+                          {post.comments}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-gray-700 line-clamp-2">{post.caption}</p>
+                    <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                      <span>{post.timeAgo}</span>
+                      <div className="flex space-x-4">
+                        <button className="flex items-center space-x-1 hover:text-red-500 transition-colors">
+                          <Heart className="h-4 w-4" />
+                          <span>{post.likes}</span>
+                        </button>
+                        <button className="flex items-center space-x-1 hover:text-blue-500 transition-colors">
+                          <MessageSquare className="h-4 w-4" />
+                          <span>{post.comments}</span>
+                        </button>
+                        <button className="hover:text-gray-700 transition-colors">
+                          <Share className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Photos Tab */}
+          <TabsContent value="photos">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {posts.map((post) => (
+                <div key={post.id} className="aspect-square overflow-hidden rounded-lg cursor-pointer hover:opacity-80 transition-opacity">
+                  <img 
+                    src={post.image} 
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Achievements Tab */}
+          <TabsContent value="achievements">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {achievements.map((achievement, index) => (
+                <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-4xl">{achievement.icon}</div>
+                    <div>
+                      <h3 className="font-semibold text-lg">{achievement.title}</h3>
+                      <p className="text-gray-600">{achievement.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Projects Section */}
+            <div className="mt-8">
+              <h2 className="text-xl font-bold mb-4">Featured Projects</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {projects.map((project, index) => (
+                  <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <img 
+                      src={project.image} 
+                      alt={project.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg mb-2">{project.title}</h3>
+                      <p className="text-gray-600 mb-3">{project.description}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {project.tech.map((tech) => (
+                          <Badge key={tech} variant="secondary" className="text-xs">
+                            {tech}
+                          </Badge>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* About Tab */}
+          <TabsContent value="about" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Study Groups */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Study Groups
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {studyGroups.map((group, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <h4 className="font-medium">{group.name}</h4>
+                        <p className="text-sm text-gray-500">{group.subject}</p>
+                        <div className="flex -space-x-2 mt-2">
+                          {group.members.map((member, idx) => (
+                            <div key={idx} className="h-6 w-6 rounded-full bg-blue-100 border-2 border-white flex items-center justify-center text-xs text-blue-600">
+                              {member.includes('+') ? member : member[0]}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <Badge variant="outline">{group.memberCount} members</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Organizations */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5" />
+                    Organizations
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {organizations.map((org, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-2xl">{org.logo}</div>
+                        <div>
+                          <h4 className="font-medium">{org.name}</h4>
+                          <p className="text-sm text-gray-500">{org.role}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
