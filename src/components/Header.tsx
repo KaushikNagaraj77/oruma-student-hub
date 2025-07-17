@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Users, MessageSquare, Home, ShoppingBag, Calendar, FileText, User, Settings, LogOut, Eye, Edit } from "lucide-react";
+import { Users, MessageSquare, Home, ShoppingBag, Calendar, FileText, User, Settings, LogOut, Eye, Edit, Sparkles } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
@@ -65,6 +65,13 @@ const Header = () => {
             >
               <Calendar className="w-4 h-4" />
               Events
+            </Link>
+            <Link 
+              to="/olive"
+              className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Sparkles className="w-4 h-4" />
+              Olive
             </Link>
             <Link 
               to="/blogs"
