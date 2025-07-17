@@ -21,6 +21,7 @@ import Profile from "./pages/Profile";
 import ProfileView from "./pages/ProfileView";
 import Messages from "./pages/Messages";
 import Chat from "./pages/Chat";
+import Olive from "./pages/Olive";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/apartments" element={<Apartments />} />
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetail />} />
+              <Route path="/olive" element={<Olive />} />
               <Route path="/blogs" element={<Blogs />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/signin" element={<SignIn />} />
